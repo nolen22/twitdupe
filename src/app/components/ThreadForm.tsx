@@ -9,12 +9,14 @@ interface ThreadFormProps {
 
 export default function ThreadForm({ onSubmit }: ThreadFormProps) {
   const [content, setContent] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const { user } = useUser();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim()) return;
 
+    setIsLoading(true);
     try {
       if (onSubmit) {
         await onSubmit(content);
@@ -39,6 +41,8 @@ export default function ThreadForm({ onSubmit }: ThreadFormProps) {
       }
     } catch (error) {
       console.error('Error creating thread:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -56,7 +60,7 @@ export default function ThreadForm({ onSubmit }: ThreadFormProps) {
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="What's happening?"
-              className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
               rows={3}
             />
             <div className="flex justify-between items-center mt-2">
@@ -65,9 +69,14 @@ export default function ThreadForm({ onSubmit }: ThreadFormProps) {
               </span>
               <button
                 type="submit"
-                className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+                disabled={!content.trim() || isLoading}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  content.trim() && !isLoading
+                    ? 'bg-blue-500 text-white hover:bg-blue-600'
+                    : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                }`}
               >
-                Post
+                {isLoading ? 'Posting...' : 'Post'}
               </button>
             </div>
           </div>
