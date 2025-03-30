@@ -29,12 +29,21 @@ export default function ThreadList() {
             content: 'This is a sample thread!',
             authorId: '1',
             authorName: 'John Doe',
-            authorImage: '/default-avatar.png',
+            authorImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
             createdAt: new Date(),
             likes: 0,
             replies: [],
           },
-          // Add more mock threads as needed
+          {
+            id: '2',
+            content: 'Another sample thread!',
+            authorId: '2',
+            authorName: 'Jane Smith',
+            authorImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jane',
+            createdAt: new Date(),
+            likes: 0,
+            replies: [],
+          },
         ];
         setThreads(mockThreads);
       } catch (error) {
