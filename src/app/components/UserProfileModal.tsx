@@ -1,12 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useUser } from '../context/UserContext';
+import { signIn } from 'next-auth/react';
 
 export default function UserProfileModal() {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState('');
-  const { login } = useUser();
 
   useEffect(() => {
     const handleShowModal = () => setIsOpen(true);
@@ -14,17 +13,25 @@ export default function UserProfileModal() {
     return () => window.removeEventListener('showProfileModal', handleShowModal);
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
-    // Create a user with a random avatar from DiceBear
-    login({
-      id: Math.random().toString(36).substr(2, 9),
-      name: name.trim(),
-      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(name.trim())}`,
-    });
-    setIsOpen(false);
+    try {
+      const result = await signIn('credentials', {
+        name: name.trim(),
+        redirect: false,
+      });
+
+      if (result?.error) {
+        console.error('Sign in error:', result.error);
+        return;
+      }
+
+      setIsOpen(false);
+    } catch (error) {
+      console.error('Sign in error:', error);
+    }
   };
 
   if (!isOpen) return null;
