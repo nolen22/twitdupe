@@ -22,8 +22,8 @@ export default function ProfilePage() {
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center space-x-4">
             <img
-              src={user.avatar}
-              alt={`${user.name}'s avatar`}
+              src={user.image || ''}
+              alt={`${user.name || 'User'}'s avatar`}
               className="h-16 w-16 rounded-full"
             />
             <div>
