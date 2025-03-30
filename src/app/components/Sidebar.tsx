@@ -56,13 +56,13 @@ export default function Sidebar({ onClose }: SidebarProps) {
           <div className="p-4 border-t border-gray-200">
             <div className="flex items-center space-x-3 mb-4">
               <img
-                src={user.avatar}
-                alt={`${user.name}'s avatar`}
+                src={user.image || ''}
+                alt={`${user.name || 'User'}'s avatar`}
                 className="h-10 w-10 rounded-full"
               />
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm text-gray-900 truncate">{user.name}</p>
-                <p className="text-xs text-gray-500">@{user.name.toLowerCase().replace(/\s+/g, '')}</p>
+                <p className="font-bold text-sm text-gray-900 truncate">{user.name || 'Anonymous'}</p>
+                <p className="text-xs text-gray-500">@{user.name?.toLowerCase().replace(/\s+/g, '') || 'anonymous'}</p>
               </div>
             </div>
             <motion.button
