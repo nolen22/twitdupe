@@ -19,6 +19,7 @@ interface ThreadData {
 export default function Home() {
   const [threads, setThreads] = useState<ThreadData[]>([]);
   const [name, setName] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const { data: session, status } = useSession();
 
   useEffect(() => {
@@ -37,14 +38,24 @@ export default function Home() {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    setError(null);
+    
+    if (!name.trim()) {
+      setError('Please enter your name');
+      return;
+    }
     
     try {
-      await signIn('credentials', {
+      const result = await signIn('credentials', {
         name: name.trim(),
-        callbackUrl: '/',
+        redirect: false,
       });
+
+      if (result?.error) {
+        setError(result.error);
+      }
     } catch (error) {
+      setError('An error occurred while signing in');
       console.error('Sign in error:', error);
     }
   };
@@ -69,6 +80,11 @@ export default function Home() {
                   required
                 />
               </div>
+              {error && (
+                <div className="text-red-500 text-sm">
+                  {error}
+                </div>
+              )}
               <button
                 type="submit"
                 className="w-full px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
