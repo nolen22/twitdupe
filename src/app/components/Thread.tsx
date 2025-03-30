@@ -51,6 +51,14 @@ export default function Thread({
     setShowReplyForm(false);
   };
 
+  const formatDate = (date: Date) => {
+    const now = new Date();
+    const threadDate = new Date(date);
+    const day = threadDate.getDate();
+    const time = threadDate.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+    return `${day} ${time}`;
+  };
+
   return (
     <div className="bg-white rounded-lg shadow p-4">
       <div className="flex items-start space-x-4">
@@ -63,7 +71,7 @@ export default function Thread({
           <div className="flex items-center space-x-2">
             <span className="font-semibold text-blue-600">{authorName}</span>
             <span className="text-gray-500 text-sm">
-              {new Date(createdAt).toLocaleDateString()}
+              {formatDate(createdAt)}
             </span>
           </div>
           <p className="mt-2 text-gray-900">{content}</p>
@@ -75,10 +83,10 @@ export default function Thread({
               Reply
             </button>
             <button className="text-gray-500 hover:text-red-500">
-              Like ({likes})
+              ❤️ {likes}
             </button>
             <button className="text-gray-500 hover:text-green-500">
-              Repost ({repostCount})
+              🔄 {repostCount}
             </button>
           </div>
           {showReplyForm && (
