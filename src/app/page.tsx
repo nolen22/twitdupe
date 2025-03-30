@@ -53,6 +53,9 @@ export default function Home() {
 
       if (result?.error) {
         setError(result.error);
+      } else if (result?.ok) {
+        // Clear the form on successful sign-in
+        setName('');
       }
     } catch (error) {
       setError('An error occurred while signing in');
