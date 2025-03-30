@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useUser } from '../context/UserContext';
 import ThreadForm from './ThreadForm';
+import { generateRandomUsername } from '@/lib/utils';
 
 interface ThreadProps {
   id: string;
@@ -30,6 +31,7 @@ export default function Thread({
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replies, setReplies] = useState<ThreadProps[]>(initialReplies);
   const { user } = useUser();
+  const [replyUsername] = useState(generateRandomUsername());
 
   const handleReply = async (newThread: ThreadProps) => {
     setReplies(prevReplies => [newThread, ...prevReplies]);
@@ -68,7 +70,10 @@ export default function Thread({
           </div>
           {showReplyForm && (
             <div className="mt-4">
-              <ThreadForm onThreadCreated={handleReply} />
+              <div className="mb-2">
+                <p className="text-sm text-gray-600">Replying as: <span className="font-medium text-gray-900">{replyUsername}</span></p>
+              </div>
+              <ThreadForm onThreadCreated={handleReply} username={replyUsername} />
             </div>
           )}
           {replies.length > 0 && (
