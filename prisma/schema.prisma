@@ -33,6 +33,7 @@ model Thread {
   authorId   String
   likeCount  Int      @default(0)
   replyCount Int      @default(0)
+  repostCount Int      @default(0)
   likes      Like[]
   reposts    Repost[]
   replies    Reply[]

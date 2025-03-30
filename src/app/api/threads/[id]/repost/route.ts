@@ -28,42 +28,44 @@ export async function POST(
 
     if (existingRepost) {
       // Remove the repost
-      await prisma.repost.delete({
-        where: {
-          userId_threadId: {
-            userId,
-            threadId,
+      await prisma.$transaction([
+        prisma.repost.delete({
+          where: {
+            userId_threadId: {
+              userId,
+              threadId,
+            },
           },
-        },
-      });
-
-      await prisma.thread.update({
-        where: { id: threadId },
-        data: {
-          reposts: {
-            decrement: 1,
+        }),
+        prisma.thread.update({
+          where: { id: threadId },
+          data: {
+            repostCount: {
+              decrement: 1,
+            },
           },
-        },
-      });
+        }),
+      ]);
 
       return NextResponse.json({ reposted: false });
     } else {
       // Create the repost
-      await prisma.repost.create({
-        data: {
-          userId,
-          threadId,
-        },
-      });
-
-      await prisma.thread.update({
-        where: { id: threadId },
-        data: {
-          reposts: {
-            increment: 1,
+      await prisma.$transaction([
+        prisma.repost.create({
+          data: {
+            userId,
+            threadId,
           },
-        },
-      });
+        }),
+        prisma.thread.update({
+          where: { id: threadId },
+          data: {
+            repostCount: {
+              increment: 1,
+            },
+          },
+        }),
+      ]);
 
       return NextResponse.json({ reposted: true });
     }
