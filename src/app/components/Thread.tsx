@@ -102,7 +102,7 @@ export default function Thread({ thread }: { thread: Thread }) {
           content: replyContent,
           userId: user.id,
           userName: user.name,
-          userAvatar: user.avatar,
+          userImage: user.image,
         }),
       });
 
