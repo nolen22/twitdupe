@@ -43,24 +43,24 @@ export async function POST(
 
     threadReplies.push(newReply);
 
-    // Create the reply in the database
-    const reply = await prisma.reply.create({
-      data: {
-        content,
-        userId,
-        threadId,
-      },
-    });
-
-    // Increment the reply count on the thread
-    await prisma.thread.update({
-      where: { id: threadId },
-      data: {
-        replies: {
-          increment: 1,
+    // Create the reply and update the reply count in a transaction
+    const [reply] = await prisma.$transaction([
+      prisma.reply.create({
+        data: {
+          content,
+          userId,
+          threadId,
         },
-      },
-    });
+      }),
+      prisma.thread.update({
+        where: { id: threadId },
+        data: {
+          replyCount: {
+            increment: 1,
+          },
+        },
+      }),
+    ]);
 
     return NextResponse.json(reply);
   } catch (error) {

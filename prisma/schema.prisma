@@ -25,16 +25,17 @@ model User {
 }
 
 model Thread {
-  id        String   @id @default(cuid())
-  content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  String
-  likeCount Int      @default(0)
-  likes     Like[]
-  reposts   Repost[]
-  replies   Reply[]
+  id         String   @id @default(cuid())
+  content    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  author     User     @relation(fields: [authorId], references: [id])
+  authorId   String
+  likeCount  Int      @default(0)
+  replyCount Int      @default(0)
+  likes      Like[]
+  reposts    Repost[]
+  replies    Reply[]
 }
 
 model Like {
