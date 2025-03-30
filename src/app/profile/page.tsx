@@ -27,8 +27,8 @@ export default function ProfilePage() {
               className="h-16 w-16 rounded-full"
             />
             <div>
-              <h2 className="text-xl font-bold text-gray-900">{user.name}</h2>
-              <p className="text-gray-500">@{user.name.toLowerCase().replace(/\s+/g, '')}</p>
+              <h2 className="text-xl font-bold text-gray-900">{user.name || 'Anonymous'}</h2>
+              <p className="text-gray-500">@{user.name?.toLowerCase().replace(/\s+/g, '') || 'anonymous'}</p>
             </div>
           </div>
         </div>
