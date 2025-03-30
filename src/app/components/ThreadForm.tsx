@@ -16,7 +16,7 @@ export default function ThreadForm() {
     <form onSubmit={handleSubmit} className="border-b border-gray-200 p-4">
       <div className="flex space-x-3">
         <img
-          src="/default-avatar.png"
+          src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix"
           alt="Your avatar"
           className="h-10 w-10 rounded-full"
         />
