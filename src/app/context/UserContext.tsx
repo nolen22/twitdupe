@@ -12,9 +12,13 @@ interface User {
 
 interface UserContextType {
   user: User | null;
+  login: (user: { id: string; name: string; avatar: string }) => void;
 }
 
-const UserContext = createContext<UserContextType>({ user: null });
+const UserContext = createContext<UserContextType>({ 
+  user: null,
+  login: () => {},
+});
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const { data: session } = useSession();
@@ -26,8 +30,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
     image: session.user.image,
   } : null;
 
+  const login = (userData: { id: string; name: string; avatar: string }) => {
+    // Since we're using NextAuth now, this function is just a placeholder
+    // You might want to trigger the NextAuth signin instead
+    console.warn('Using login() is deprecated. Please use NextAuth signin instead.');
+  };
+
   return (
-    <UserContext.Provider value={{ user }}>
+    <UserContext.Provider value={{ user, login }}>
       {children}
     </UserContext.Provider>
   );

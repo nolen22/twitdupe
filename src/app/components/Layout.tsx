@@ -85,13 +85,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {user ? (
           <div className="flex items-center space-x-3">
             <img
-              src={user.avatar}
-              alt={user.name}
+              src={user.image || ''}
+              alt={user.name || 'User'}
               className="w-8 h-8 rounded-full ring-2 ring-gray-200 dark:ring-gray-800"
             />
             <div>
-              <p className="font-medium text-gray-900 dark:text-white">{user.name}</p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">@{user.name.toLowerCase().replace(/\s+/g, '')}</p>
+              <p className="font-medium text-gray-900 dark:text-white">{user.name || 'Anonymous'}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">@{user.name?.toLowerCase().replace(/\s+/g, '') || 'anonymous'}</p>
             </div>
           </div>
         ) : (
