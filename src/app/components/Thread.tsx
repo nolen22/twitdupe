@@ -2,202 +2,190 @@
 
 import { useState } from 'react';
 import { useUser } from '../context/UserContext';
+import ThreadForm from './ThreadForm';
 
-interface Thread {
+interface ThreadProps {
   id: string;
   content: string;
-  authorId: string;
   authorName: string;
   authorImage: string;
-  createdAt: string;
+  createdAt: Date;
   likes: number;
-  replies: Thread[];
-  reposts: number;
+  repostCount: number;
+  replies?: ThreadProps[];
 }
 
-export default function Thread({ thread }: { thread: Thread }) {
-  const { user } = useUser();
-  const [likes, setLikes] = useState(thread.likes);
+export default function Thread({
+  id,
+  content,
+  authorName,
+  authorImage,
+  createdAt,
+  likes: initialLikes,
+  repostCount: initialRepostCount,
+  replies = [],
+}: ThreadProps) {
+  const [likes, setLikes] = useState(initialLikes);
+  const [repostCount, setRepostCount] = useState(initialRepostCount);
   const [isLiked, setIsLiked] = useState(false);
-  const [reposts, setReposts] = useState(thread.reposts || 0);
   const [isReposted, setIsReposted] = useState(false);
   const [showReplyForm, setShowReplyForm] = useState(false);
-  const [replyContent, setReplyContent] = useState('');
+  const { user } = useUser();
 
   const handleLike = async () => {
-    if (!user) {
-      const event = new CustomEvent('showProfileModal');
-      window.dispatchEvent(event);
-      return;
-    }
-
     try {
-      const response = await fetch(`/api/threads/${thread.id}/like`, {
+      const response = await fetch(`/api/threads/${id}/like`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          userId: user.id,
-          userName: user.name,
-          userImage: user.image,
-        }),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to like thread');
+      if (response.ok) {
+        setLikes(prev => isLiked ? prev - 1 : prev + 1);
+        setIsLiked(!isLiked);
       }
-
-      setLikes(prev => isLiked ? prev - 1 : prev + 1);
-      setIsLiked(!isLiked);
     } catch (error) {
       console.error('Error liking thread:', error);
     }
   };
 
   const handleRepost = async () => {
-    if (!user) {
-      const event = new CustomEvent('showProfileModal');
-      window.dispatchEvent(event);
-      return;
-    }
-
     try {
-      const response = await fetch(`/api/threads/${thread.id}/repost`, {
+      const response = await fetch(`/api/threads/${id}/repost`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: user.id }),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to repost thread');
+      if (response.ok) {
+        setRepostCount(prev => isReposted ? prev - 1 : prev + 1);
+        setIsReposted(!isReposted);
       }
-
-      setReposts(prev => isReposted ? prev - 1 : prev + 1);
-      setIsReposted(!isReposted);
     } catch (error) {
       console.error('Error reposting thread:', error);
     }
   };
 
-  const handleReply = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) {
-      const event = new CustomEvent('showProfileModal');
-      window.dispatchEvent(event);
-      return;
-    }
-
-    if (!replyContent.trim()) return;
-
+  const handleReply = async (replyContent: string) => {
     try {
-      const response = await fetch(`/api/threads/${thread.id}/reply`, {
+      const response = await fetch(`/api/threads/${id}/reply`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           content: replyContent,
-          userId: user.id,
-          userName: user.name,
-          userImage: user.image,
+          authorName: user?.name || 'Anonymous',
+          authorImage: user?.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous`,
         }),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to reply to thread');
+      if (response.ok) {
+        const newReply = await response.json();
+        replies.push(newReply);
+        setShowReplyForm(false);
       }
-
-      setReplyContent('');
-      setShowReplyForm(false);
-      // Refresh the page to show the new reply
-      window.location.reload();
     } catch (error) {
       console.error('Error replying to thread:', error);
     }
   };
 
-  const timeAgo = (date: string) => {
+  const formatTimeAgo = (date: Date) => {
     const now = new Date();
-    const past = new Date(date);
-    const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
-
-    if (diffInSeconds < 60) return `${diffInSeconds}s`;
-    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m`;
-    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h`;
-    return past.toLocaleDateString();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return 'just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    return `${Math.floor(diffInSeconds / 86400)}d ago`;
   };
 
   return (
-    <div className="border-b border-gray-200 py-4">
-      <div className="flex items-start space-x-3">
+    <div className="border-b border-gray-200 p-4">
+      <div className="flex gap-3">
         <img
-          src={thread.authorImage}
-          alt={thread.authorName}
-          className="h-10 w-10 rounded-full"
+          src={authorImage}
+          alt={authorName}
+          className="w-10 h-10 rounded-full"
         />
         <div className="flex-1">
-          <div className="flex items-center space-x-2">
-            <h4 className="font-bold text-gray-900">{thread.authorName}</h4>
-            <span className="text-gray-500">@{thread.authorName.toLowerCase().replace(/\s+/g, '')}</span>
-            <span className="text-gray-500">·</span>
-            <span className="text-gray-500">{timeAgo(thread.createdAt)}</span>
+          <div className="flex items-center gap-2">
+            <span className="font-semibold">{authorName}</span>
+            <span className="text-gray-500 text-sm">
+              {formatTimeAgo(new Date(createdAt))}
+            </span>
           </div>
-          <p className="mt-1 text-gray-900">{thread.content}</p>
-          <div className="mt-2 flex items-center space-x-6">
-            <button 
-              onClick={() => setShowReplyForm(!showReplyForm)}
-              className="flex items-center space-x-1 text-gray-500 hover:text-blue-500 group"
-            >
-              <span className="text-xl group-hover:scale-110 transition-transform">💬</span>
-              <span className="text-sm">{thread.replies.length}</span>
-            </button>
-            <button 
-              onClick={handleRepost}
-              className={`flex items-center space-x-1 group ${
-                isReposted ? 'text-green-500' : 'text-gray-500 hover:text-green-500'
-              }`}
-            >
-              <span className="text-xl group-hover:scale-110 transition-transform">🔄</span>
-              <span className="text-sm">{reposts}</span>
-            </button>
+          <p className="mt-1">{content}</p>
+          <div className="flex gap-4 mt-2">
             <button
               onClick={handleLike}
-              className={`flex items-center space-x-1 group ${
-                isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+              className={`flex items-center gap-1 text-gray-500 hover:text-red-500 transition-colors ${
+                isLiked ? 'text-red-500' : ''
               }`}
             >
-              <span className="text-xl group-hover:scale-110 transition-transform">
-                {isLiked ? '❤️' : '🤍'}
-              </span>
-              <span className="text-sm">{likes}</span>
+              <svg
+                className="w-5 h-5"
+                fill={isLiked ? 'currentColor' : 'none'}
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                />
+              </svg>
+              <span>{likes}</span>
             </button>
-            <button className="flex items-center space-x-1 text-gray-500 hover:text-blue-500 group">
-              <span className="text-xl group-hover:scale-110 transition-transform">📤</span>
+            <button
+              onClick={handleRepost}
+              className={`flex items-center gap-1 text-gray-500 hover:text-green-500 transition-colors ${
+                isReposted ? 'text-green-500' : ''
+              }`}
+            >
+              <svg
+                className="w-5 h-5"
+                fill={isReposted ? 'currentColor' : 'none'}
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
+                />
+              </svg>
+              <span>{repostCount}</span>
+            </button>
+            <button
+              onClick={() => setShowReplyForm(!showReplyForm)}
+              className="flex items-center gap-1 text-gray-500 hover:text-blue-500 transition-colors"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                />
+              </svg>
+              <span>{replies.length}</span>
             </button>
           </div>
-
           {showReplyForm && (
-            <form onSubmit={handleReply} className="mt-4">
-              <textarea
-                value={replyContent}
-                onChange={(e) => setReplyContent(e.target.value)}
-                placeholder="Write your reply..."
-                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
-                rows={2}
-              />
-              <div className="mt-2 flex justify-end">
-                <button
-                  type="submit"
-                  disabled={!replyContent.trim()}
-                  className="px-4 py-2 bg-blue-500 text-white rounded-full font-medium hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
-                >
-                  Reply
-                </button>
-              </div>
-            </form>
+            <div className="mt-4">
+              <ThreadForm onSubmit={handleReply} />
+            </div>
+          )}
+          {replies.length > 0 && (
+            <div className="mt-4 space-y-4">
+              {replies.map((reply) => (
+                <Thread
+                  key={reply.id}
+                  {...reply}
+                />
+              ))}
+            </div>
           )}
         </div>
       </div>

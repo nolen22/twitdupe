@@ -1,0 +1,3 @@
+[33mb192aeb[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m fix: update auth configuration and make user name unique
+[33m6129c8e[m feat: add example posts, improve search page, and update auth
+[33m81ccb57[m fix: move providers to client component for Vercel deployment

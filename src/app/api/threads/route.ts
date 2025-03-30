@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import prisma from '@/lib/prisma';
-import { authOptions } from '@/lib/auth';
 
 // In-memory storage for threads (replace with database later)
 let threads = [
@@ -33,53 +31,43 @@ export async function GET() {
       orderBy: {
         createdAt: 'desc',
       },
-      include: {
-        author: {
-          select: {
-            name: true,
-            image: true,
-          },
-        },
-      },
     });
 
     return NextResponse.json(threads);
   } catch (error) {
-    console.error('Error in GET /api/threads:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    console.error('Error fetching threads:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch threads' },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return new NextResponse('Unauthorized', { status: 401 });
-    }
+    const { content, authorName, authorImage } = await request.json();
 
-    const { content } = await request.json();
-    if (!content?.trim()) {
-      return new NextResponse('Content is required', { status: 400 });
+    if (!content) {
+      return NextResponse.json(
+        { error: 'Content is required' },
+        { status: 400 }
+      );
     }
 
     const thread = await prisma.thread.create({
       data: {
         content,
-        authorId: session.user.id,
-      },
-      include: {
-        author: {
-          select: {
-            name: true,
-            image: true,
-          },
-        },
+        authorName: authorName || 'Anonymous',
+        authorImage: authorImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous`,
       },
     });
 
     return NextResponse.json(thread);
   } catch (error) {
-    console.error('Error in POST /api/threads:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    console.error('Error creating thread:', error);
+    return NextResponse.json(
+      { error: 'Failed to create thread' },
+      { status: 500 }
+    );
   }
 } 

@@ -1,10 +1,7 @@
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { PrismaAdapter } from '@auth/prisma-adapter';
-import prisma from './prisma';
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -14,20 +11,11 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.name) return null;
 
-        // Create or find user
-        const user = await prisma.user.upsert({
-          where: { name: credentials.name },
-          update: {},
-          create: {
-            name: credentials.name,
-            image: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(credentials.name)}`,
-          },
-        });
-
+        // Create a simple user object
         return {
-          id: user.id,
-          name: user.name,
-          image: user.image,
+          id: Math.random().toString(36).substring(2),
+          name: credentials.name,
+          image: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(credentials.name)}`,
         };
       }
     })
@@ -36,14 +24,26 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt',
   },
   callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.name = user.name;
+        token.image = user.image;
+      }
+      return token;
+    },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.sub!;
+        session.user.id = token.id as string;
+        session.user.name = token.name as string;
+        session.user.image = token.image as string;
       }
       return session;
     },
   },
   pages: {
     signIn: '/',
+    error: '/',
   },
+  debug: process.env.NODE_ENV === 'development',
 }; 
