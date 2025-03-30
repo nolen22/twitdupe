@@ -6,69 +6,47 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { userId } = await request.json();
+    const { username } = await request.json();
     const threadId = params.id;
 
-    // Check if like already exists
-    const existingLike = await prisma.like.findUnique({
+    // Check if user has already liked the thread
+    const existingLike = await prisma.like.findFirst({
       where: {
-        threadId_userId: {
-          threadId,
-          userId,
-        },
+        threadId,
+        authorName: username,
       },
     });
 
     if (existingLike) {
-      // Unlike
+      // Remove the like
       await prisma.like.delete({
         where: {
-          threadId_userId: {
-            threadId,
-            userId,
-          },
+          id: existingLike.id,
         },
       });
-
       await prisma.thread.update({
         where: { id: threadId },
-        data: {
-          likesCount: {
-            decrement: 1,
-          },
-        },
+        data: { likesCount: { decrement: 1 } },
       });
+      return NextResponse.json({ liked: false });
     } else {
-      // Like
+      // Add the like
       await prisma.like.create({
         data: {
           threadId,
-          userId,
+          authorName: username,
         },
       });
-
       await prisma.thread.update({
         where: { id: threadId },
-        data: {
-          likesCount: {
-            increment: 1,
-          },
-        },
+        data: { likesCount: { increment: 1 } },
       });
+      return NextResponse.json({ liked: true });
     }
-
-    const updatedThread = await prisma.thread.findUnique({
-      where: { id: threadId },
-      include: {
-        likes: true,
-      },
-    });
-
-    return NextResponse.json(updatedThread);
   } catch (error) {
-    console.error('Error in like route:', error);
+    console.error('Error handling like:', error);
     return NextResponse.json(
-      { error: 'Failed to process like' },
+      { error: 'Failed to handle like' },
       { status: 500 }
     );
   }

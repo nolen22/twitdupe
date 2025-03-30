@@ -84,12 +84,11 @@ model Thread {
 model Like {
   id        String   @id @default(cuid())
   threadId  String
-  userId    String
+  authorName String
   thread    Thread   @relation(fields: [threadId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 
-  @@unique([threadId, userId], name: "threadId_userId")
+  @@unique([threadId, authorName])
 }
 
 model Repost {

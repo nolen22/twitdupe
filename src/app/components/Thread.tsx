@@ -24,7 +24,7 @@ export default function Thread({
   authorName,
   authorImage,
   createdAt,
-  likes,
+  likes: initialLikes,
   repostCount,
   replies: initialReplies = [],
 }: ThreadProps) {
@@ -32,6 +32,10 @@ export default function Thread({
   const [replies, setReplies] = useState<ThreadProps[]>(initialReplies);
   const { user } = useUser();
   const [replyUsername, setReplyUsername] = useState<string>('');
+  const [likes, setLikes] = useState(initialLikes);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [isRepostAnimating, setIsRepostAnimating] = useState(false);
 
   useEffect(() => {
     // Use the same username from localStorage for replies
@@ -49,6 +53,36 @@ export default function Thread({
   const handleReply = async (newThread: ThreadProps) => {
     setReplies(prevReplies => [newThread, ...prevReplies]);
     setShowReplyForm(false);
+  };
+
+  const handleLike = async () => {
+    if (!replyUsername) return;
+    
+    setIsAnimating(true);
+    try {
+      const response = await fetch(`/api/threads/${id}/like`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ username: replyUsername }),
+      });
+
+      if (!response.ok) throw new Error('Failed to like thread');
+
+      const { liked } = await response.json();
+      setIsLiked(liked);
+      setLikes(prev => liked ? prev + 1 : prev - 1);
+    } catch (error) {
+      console.error('Error liking thread:', error);
+    } finally {
+      setTimeout(() => setIsAnimating(false), 1000);
+    }
+  };
+
+  const handleRepost = () => {
+    setIsRepostAnimating(true);
+    setTimeout(() => setIsRepostAnimating(false), 1000);
   };
 
   const formatDate = (date: Date) => {
@@ -78,14 +112,28 @@ export default function Thread({
           <div className="flex items-center space-x-4 mt-4">
             <button
               onClick={() => setShowReplyForm(!showReplyForm)}
-              className="text-gray-500 hover:text-blue-500"
+              className="text-gray-500 hover:text-blue-500 transition-colors duration-200"
             >
               Reply
             </button>
-            <button className="text-gray-500 hover:text-red-500">
-              ❤️ {likes}
+            <button 
+              onClick={handleLike}
+              className={`text-gray-500 hover:text-red-500 transition-all duration-200 relative group ${isAnimating ? 'scale-125' : ''}`}
+            >
+              <span className="relative">
+                ❤️
+                {isLiked && (
+                  <span className="absolute inset-0 animate-ping text-red-500 opacity-75">
+                    ❤️
+                  </span>
+                )}
+              </span>
+              <span className="ml-1">{likes}</span>
             </button>
-            <button className="text-gray-500 hover:text-green-500">
+            <button 
+              onClick={handleRepost}
+              className={`text-gray-500 hover:text-green-500 transition-all duration-200 ${isRepostAnimating ? 'animate-spin' : ''}`}
+            >
               🔄 {repostCount}
             </button>
           </div>
