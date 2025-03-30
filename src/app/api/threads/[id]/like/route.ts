@@ -9,11 +9,22 @@ export async function POST(
     const { username } = await request.json();
     const threadId = params.id;
 
+    // First, ensure the user exists
+    const user = await prisma.user.upsert({
+      where: { name: username },
+      update: {},
+      create: {
+        name: username,
+        email: `${username}@example.com`, // Temporary email for the user
+        image: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(username)}`,
+      },
+    });
+
     // Check if user has already liked the thread
     const existingLike = await prisma.like.findFirst({
       where: {
         threadId,
-        authorName: username,
+        userId: user.id,
       },
     });
 
@@ -34,7 +45,7 @@ export async function POST(
       await prisma.like.create({
         data: {
           threadId,
-          authorName: username,
+          userId: user.id,
         },
       });
       await prisma.thread.update({
