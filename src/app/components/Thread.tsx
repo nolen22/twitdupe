@@ -61,7 +61,7 @@ export default function Thread({
         />
         <div className="flex-1">
           <div className="flex items-center space-x-2">
-            <span className="font-semibold">{authorName}</span>
+            <span className="font-semibold text-blue-600">{authorName}</span>
             <span className="text-gray-500 text-sm">
               {new Date(createdAt).toLocaleDateString()}
             </span>
