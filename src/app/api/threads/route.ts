@@ -88,8 +88,6 @@ export async function POST(request: Request) {
       data: {
         content,
         authorId: session.user.name,
-        authorName: session.user.name,
-        authorImage: session.user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.name}`,
       },
     }) as any;
 
