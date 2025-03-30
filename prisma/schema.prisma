@@ -100,7 +100,7 @@ model Repost {
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 
-  @@unique([threadId, userId])
+  @@unique([threadId, userId], name: "threadId_userId")
 }
 
 model Reply {
