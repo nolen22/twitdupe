@@ -27,10 +27,19 @@ export async function POST(
         content,
         authorId: session.user.name,
         parentId: params.id,
-      } as any, // Type assertion to bypass type checking temporarily
-    });
+      },
+    }) as any;
 
-    return NextResponse.json(reply);
+    return NextResponse.json({
+      id: reply.id,
+      content: reply.content,
+      authorName: session.user.name,
+      authorImage: session.user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.name}`,
+      createdAt: reply.createdAt,
+      likes: reply.likesCount,
+      repostCount: reply.repostCount,
+      replies: [],
+    });
   } catch (error) {
     console.error('Error replying to thread:', error);
     return NextResponse.json(
