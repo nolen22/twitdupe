@@ -1,76 +1,75 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import prisma from '@/lib/prisma';
-import { authOptions } from '@/lib/auth';
 
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return new NextResponse('Unauthorized', { status: 401 });
-    }
-
+    const { userId } = await request.json();
     const threadId = params.id;
-    const userId = session.user.id;
 
-    // Check if the user has already liked this thread
+    // Check if like already exists
     const existingLike = await prisma.like.findUnique({
       where: {
-        userId_threadId: {
-          userId,
+        threadId_userId: {
           threadId,
+          userId,
         },
       },
     });
 
     if (existingLike) {
-      // Unlike the thread
-      await prisma.$transaction([
-        prisma.like.delete({
-          where: {
-            userId_threadId: {
-              userId,
-              threadId,
-            },
-          },
-        }),
-        prisma.thread.update({
-          where: { id: threadId },
-          data: {
-            likeCount: {
-              decrement: 1,
-            },
-          },
-        }),
-      ]);
-
-      return NextResponse.json({ liked: false });
-    } else {
-      // Like the thread
-      await prisma.$transaction([
-        prisma.like.create({
-          data: {
-            userId,
+      // Unlike
+      await prisma.like.delete({
+        where: {
+          threadId_userId: {
             threadId,
+            userId,
           },
-        }),
-        prisma.thread.update({
-          where: { id: threadId },
-          data: {
-            likeCount: {
-              increment: 1,
-            },
-          },
-        }),
-      ]);
+        },
+      });
 
-      return NextResponse.json({ liked: true });
+      await prisma.thread.update({
+        where: { id: threadId },
+        data: {
+          likesCount: {
+            decrement: 1,
+          },
+        },
+      });
+    } else {
+      // Like
+      await prisma.like.create({
+        data: {
+          threadId,
+          userId,
+        },
+      });
+
+      await prisma.thread.update({
+        where: { id: threadId },
+        data: {
+          likesCount: {
+            increment: 1,
+          },
+        },
+      });
     }
+
+    const updatedThread = await prisma.thread.findUnique({
+      where: { id: threadId },
+      include: {
+        likes: true,
+      },
+    });
+
+    return NextResponse.json(updatedThread);
   } catch (error) {
     console.error('Error in like route:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to process like' },
+      { status: 500 }
+    );
   }
 } 

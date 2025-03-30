@@ -69,7 +69,7 @@ model Thread {
   likes       Like[]
   reposts     Repost[]
   replies     Reply[]
-  likeCount   Int      @default(0)
+  likesCount  Int      @default(0)
   repostCount Int      @default(0)
   replyCount  Int      @default(0)
   createdAt   DateTime @default(now())
@@ -89,7 +89,7 @@ model Like {
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 
-  @@unique([threadId, userId])
+  @@unique([threadId, userId], name: "threadId_userId")
 }
 
 model Repost {
