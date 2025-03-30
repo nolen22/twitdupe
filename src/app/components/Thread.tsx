@@ -42,8 +42,19 @@ export default function Thread({ thread }: { thread: Thread }) {
     }
   };
 
+  const timeAgo = (date: string) => {
+    const now = new Date();
+    const past = new Date(date);
+    const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
+
+    if (diffInSeconds < 60) return `${diffInSeconds}s`;
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h`;
+    return past.toLocaleDateString();
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
+    <div className="border-b border-gray-200 py-4">
       <div className="flex items-start space-x-3">
         <img
           src={thread.authorImage}
@@ -53,30 +64,33 @@ export default function Thread({ thread }: { thread: Thread }) {
         <div className="flex-1">
           <div className="flex items-center space-x-2">
             <h4 className="font-bold text-gray-900">{thread.authorName}</h4>
-            <span className="text-gray-500 text-sm">
-              {new Date(thread.createdAt).toLocaleDateString()}
-            </span>
+            <span className="text-gray-500">@{thread.authorName.toLowerCase().replace(/\s+/g, '')}</span>
+            <span className="text-gray-500">·</span>
+            <span className="text-gray-500">{timeAgo(thread.createdAt)}</span>
           </div>
-          <p className="mt-1 text-gray-800">{thread.content}</p>
-          <div className="mt-2 flex items-center space-x-4">
+          <p className="mt-1 text-gray-900">{thread.content}</p>
+          <div className="mt-2 flex items-center space-x-6">
+            <button className="flex items-center space-x-1 text-gray-500 hover:text-blue-500 group">
+              <span className="text-xl group-hover:scale-110 transition-transform">💬</span>
+              <span className="text-sm">{thread.replies.length}</span>
+            </button>
+            <button className="flex items-center space-x-1 text-gray-500 hover:text-green-500 group">
+              <span className="text-xl group-hover:scale-110 transition-transform">🔄</span>
+              <span className="text-sm">0</span>
+            </button>
             <button
               onClick={handleLike}
-              className={`flex items-center space-x-1 ${
+              className={`flex items-center space-x-1 group ${
                 isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
               }`}
             >
-              <span>{isLiked ? '❤️' : '🤍'}</span>
-              <span>{likes}</span>
+              <span className="text-xl group-hover:scale-110 transition-transform">
+                {isLiked ? '❤️' : '🤍'}
+              </span>
+              <span className="text-sm">{likes}</span>
             </button>
-            <button className="text-gray-500 hover:text-blue-500 flex items-center space-x-1">
-              <span>💬</span>
-              <span>{thread.replies.length}</span>
-            </button>
-            <button className="text-gray-500 hover:text-green-500">
-              🔄 Repost
-            </button>
-            <button className="text-gray-500 hover:text-blue-500">
-              📤 Share
+            <button className="flex items-center space-x-1 text-gray-500 hover:text-blue-500 group">
+              <span className="text-xl group-hover:scale-110 transition-transform">📤</span>
             </button>
           </div>
         </div>
