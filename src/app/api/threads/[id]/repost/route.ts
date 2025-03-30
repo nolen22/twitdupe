@@ -1,46 +1,74 @@
 import { NextResponse } from 'next/server';
-
-// In-memory storage for reposts (replace with database later)
-const reposts = new Map<string, Set<string>>();
+import { getServerSession } from 'next-auth';
+import prisma from '@/lib/prisma';
+import { authOptions } from '@/lib/auth';
 
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const body = await request.json();
-    const { userId } = body;
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
+
     const threadId = params.id;
+    const userId = session.user.id;
 
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'User ID is required' },
-        { status: 400 }
-      );
-    }
-
-    // Initialize reposts set for this thread if it doesn't exist
-    if (!reposts.has(threadId)) {
-      reposts.set(threadId, new Set());
-    }
-
-    const threadReposts = reposts.get(threadId)!;
-    const isReposted = threadReposts.has(userId);
-
-    if (isReposted) {
-      threadReposts.delete(userId);
-    } else {
-      threadReposts.add(userId);
-    }
-
-    return NextResponse.json({
-      reposts: threadReposts.size,
-      isReposted: !isReposted,
+    // Check if the user has already reposted this thread
+    const existingRepost = await prisma.repost.findUnique({
+      where: {
+        userId_threadId: {
+          userId,
+          threadId,
+        },
+      },
     });
+
+    if (existingRepost) {
+      // Remove the repost
+      await prisma.repost.delete({
+        where: {
+          userId_threadId: {
+            userId,
+            threadId,
+          },
+        },
+      });
+
+      await prisma.thread.update({
+        where: { id: threadId },
+        data: {
+          reposts: {
+            decrement: 1,
+          },
+        },
+      });
+
+      return NextResponse.json({ reposted: false });
+    } else {
+      // Create the repost
+      await prisma.repost.create({
+        data: {
+          userId,
+          threadId,
+        },
+      });
+
+      await prisma.thread.update({
+        where: { id: threadId },
+        data: {
+          reposts: {
+            increment: 1,
+          },
+        },
+      });
+
+      return NextResponse.json({ reposted: true });
+    }
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to repost thread' },
-      { status: 500 }
-    );
+    console.error('Error in repost route:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 } 

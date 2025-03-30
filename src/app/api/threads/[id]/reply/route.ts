@@ -1,4 +1,7 @@
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import prisma from '@/lib/prisma';
+import { authOptions } from '@/lib/auth';
 
 // In-memory storage for replies (replace with database later)
 const replies = new Map<string, any[]>();
@@ -8,15 +11,17 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const body = await request.json();
-    const { content, userId, userName, userAvatar } = body;
-    const threadId = params.id;
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
 
-    if (!content || !userId || !userName || !userAvatar) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+    const threadId = params.id;
+    const userId = session.user.id;
+    const { content } = await request.json();
+
+    if (!content?.trim()) {
+      return new NextResponse('Content is required', { status: 400 });
     }
 
     // Initialize replies array for this thread if it doesn't exist
@@ -29,8 +34,8 @@ export async function POST(
       id: Date.now().toString(),
       content,
       authorId: userId,
-      authorName: userName,
-      authorImage: userAvatar,
+      authorName: session.user.name,
+      authorImage: session.user.image,
       createdAt: new Date().toISOString(),
       likes: 0,
       replies: [],
@@ -38,11 +43,28 @@ export async function POST(
 
     threadReplies.push(newReply);
 
-    return NextResponse.json(newReply, { status: 201 });
+    // Create the reply in the database
+    const reply = await prisma.reply.create({
+      data: {
+        content,
+        userId,
+        threadId,
+      },
+    });
+
+    // Increment the reply count on the thread
+    await prisma.thread.update({
+      where: { id: threadId },
+      data: {
+        replies: {
+          increment: 1,
+        },
+      },
+    });
+
+    return NextResponse.json(reply);
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to reply to thread' },
-      { status: 500 }
-    );
+    console.error('Error in reply route:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 } 

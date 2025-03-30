@@ -56,6 +56,59 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     )},
   ];
 
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-800">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-white">Threads</h1>
+      </div>
+      <nav className="flex-1 p-4">
+        <ul className="space-y-2">
+          {navigation.map((item) => (
+            <li key={item.name}>
+              <Link
+                href={item.href}
+                className={`flex items-center space-x-3 p-3 rounded-xl transition-colors ${
+                  pathname === item.href
+                    ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900'
+                }`}
+                onClick={() => setIsSidebarOpen(false)}
+              >
+                <span className="w-6 h-6">{item.icon}</span>
+                <span>{item.name}</span>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <div className="p-4 border-t border-gray-200 dark:border-gray-800">
+        {user ? (
+          <div className="flex items-center space-x-3">
+            <img
+              src={user.avatar}
+              alt={user.name}
+              className="w-8 h-8 rounded-full ring-2 ring-gray-200 dark:ring-gray-800"
+            />
+            <div>
+              <p className="font-medium text-gray-900 dark:text-white">{user.name}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">@{user.name.toLowerCase().replace(/\s+/g, '')}</p>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => {
+              const event = new CustomEvent('showProfileModal');
+              window.dispatchEvent(event);
+            }}
+            className="w-full py-2 px-4 bg-black dark:bg-white text-white dark:text-black rounded-xl font-medium hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors"
+          >
+            Sign In
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-white dark:bg-black">
       {/* Mobile menu button */}
@@ -81,11 +134,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </svg>
       </button>
 
-      {/* Sidebar */}
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:block fixed inset-y-0 left-0 w-64 bg-white dark:bg-black border-r border-gray-200 dark:border-gray-800 shadow-lg">
+        <SidebarContent />
+      </div>
+
+      {/* Mobile Sidebar */}
       <AnimatePresence>
         {isSidebarOpen && (
           <>
-            {/* Overlay */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -93,64 +150,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               onClick={toggleSidebar}
               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden"
             />
-            {/* Sidebar */}
             <motion.div
               initial={{ x: '-100%' }}
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 20 }}
-              className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-black border-r border-gray-200 dark:border-gray-800 shadow-lg z-50 lg:translate-x-0 lg:static"
+              className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-black border-r border-gray-200 dark:border-gray-800 shadow-lg z-50 lg:hidden"
             >
-              <div className="flex flex-col h-full">
-                <div className="p-4 border-b border-gray-200 dark:border-gray-800">
-                  <h1 className="text-xl font-bold text-gray-900 dark:text-white">Threads</h1>
-                </div>
-                <nav className="flex-1 p-4">
-                  <ul className="space-y-2">
-                    {navigation.map((item) => (
-                      <li key={item.name}>
-                        <Link
-                          href={item.href}
-                          className={`flex items-center space-x-3 p-3 rounded-xl transition-colors ${
-                            pathname === item.href
-                              ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
-                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900'
-                          }`}
-                          onClick={() => setIsSidebarOpen(false)}
-                        >
-                          <span className="w-6 h-6">{item.icon}</span>
-                          <span>{item.name}</span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </nav>
-                <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-                  {user ? (
-                    <div className="flex items-center space-x-3">
-                      <img
-                        src={user.avatar}
-                        alt={user.name}
-                        className="w-8 h-8 rounded-full ring-2 ring-gray-200 dark:ring-gray-800"
-                      />
-                      <div>
-                        <p className="font-medium text-gray-900 dark:text-white">{user.name}</p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">@{user.name.toLowerCase().replace(/\s+/g, '')}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        const event = new CustomEvent('showProfileModal');
-                        window.dispatchEvent(event);
-                      }}
-                      className="w-full py-2 px-4 bg-black dark:bg-white text-white dark:text-black rounded-xl font-medium hover:bg-gray-900 dark:hover:bg-gray-100 transition-colors"
-                    >
-                      Sign In
-                    </button>
-                  )}
-                </div>
-              </div>
+              <SidebarContent />
             </motion.div>
           </>
         )}
