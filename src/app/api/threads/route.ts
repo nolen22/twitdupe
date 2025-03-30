@@ -3,30 +3,6 @@ import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
-// In-memory storage for threads (replace with database later)
-let threads = [
-  {
-    id: '1',
-    content: 'This is a sample thread!',
-    authorId: '1',
-    authorName: 'John Doe',
-    authorImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
-    createdAt: new Date().toISOString(),
-    likes: 0,
-    replies: [],
-  },
-  {
-    id: '2',
-    content: 'Another sample thread!',
-    authorId: '2',
-    authorName: 'Jane Smith',
-    authorImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jane',
-    createdAt: new Date().toISOString(),
-    likes: 0,
-    replies: [],
-  },
-];
-
 export async function GET() {
   try {
     const threads = await prisma.thread.findMany({
@@ -88,14 +64,19 @@ export async function POST(request: Request) {
       data: {
         content,
         authorId: session.user.name,
+        authorName: session.user.name,
+        authorImage: session.user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.name}`,
+        likesCount: 0,
+        repostCount: 0,
+        replyCount: 0,
       },
     }) as any;
 
     return NextResponse.json({
       id: thread.id,
       content: thread.content,
-      authorName: session.user.name,
-      authorImage: session.user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.name}`,
+      authorName: thread.authorName,
+      authorImage: thread.authorImage,
       createdAt: thread.createdAt,
       likes: thread.likesCount,
       repostCount: thread.repostCount,
