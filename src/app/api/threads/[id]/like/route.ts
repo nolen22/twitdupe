@@ -28,42 +28,44 @@ export async function POST(
 
     if (existingLike) {
       // Unlike the thread
-      await prisma.like.delete({
-        where: {
-          userId_threadId: {
-            userId,
-            threadId,
+      await prisma.$transaction([
+        prisma.like.delete({
+          where: {
+            userId_threadId: {
+              userId,
+              threadId,
+            },
           },
-        },
-      });
-
-      await prisma.thread.update({
-        where: { id: threadId },
-        data: {
-          likes: {
-            decrement: 1,
+        }),
+        prisma.thread.update({
+          where: { id: threadId },
+          data: {
+            likeCount: {
+              decrement: 1,
+            },
           },
-        },
-      });
+        }),
+      ]);
 
       return NextResponse.json({ liked: false });
     } else {
       // Like the thread
-      await prisma.like.create({
-        data: {
-          userId,
-          threadId,
-        },
-      });
-
-      await prisma.thread.update({
-        where: { id: threadId },
-        data: {
-          likes: {
-            increment: 1,
+      await prisma.$transaction([
+        prisma.like.create({
+          data: {
+            userId,
+            threadId,
           },
-        },
-      });
+        }),
+        prisma.thread.update({
+          where: { id: threadId },
+          data: {
+            likeCount: {
+              increment: 1,
+            },
+          },
+        }),
+      ]);
 
       return NextResponse.json({ liked: true });
     }

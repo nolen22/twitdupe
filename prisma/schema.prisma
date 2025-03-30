@@ -31,6 +31,7 @@ model Thread {
   updatedAt DateTime @updatedAt
   author    User     @relation(fields: [authorId], references: [id])
   authorId  String
+  likeCount Int      @default(0)
   likes     Like[]
   reposts   Repost[]
   replies   Reply[]
