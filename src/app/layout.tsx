@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { UserProvider } from './context/UserContext';
 import UserProfileModal from './components/UserProfileModal';
+import Layout from './components/Layout';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -28,7 +29,7 @@ export default function RootLayout({
     <html lang="en" className="h-full">
       <body className={`${inter.className} h-full antialiased`}>
         <UserProvider>
-          {children}
+          <Layout>{children}</Layout>
           <UserProfileModal />
         </UserProvider>
       </body>
