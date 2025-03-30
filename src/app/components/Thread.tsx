@@ -37,7 +37,11 @@ export default function Thread({ thread }: { thread: Thread }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId: user.id }),
+        body: JSON.stringify({
+          userId: user.id,
+          userName: user.name,
+          userImage: user.image,
+        }),
       });
 
       if (!response.ok) {
