@@ -12,15 +12,24 @@ interface Thread {
   createdAt: string;
   likes: number;
   replies: Thread[];
+  reposts: number;
 }
 
 export default function Thread({ thread }: { thread: Thread }) {
   const { user } = useUser();
   const [likes, setLikes] = useState(thread.likes);
   const [isLiked, setIsLiked] = useState(false);
+  const [reposts, setReposts] = useState(thread.reposts || 0);
+  const [isReposted, setIsReposted] = useState(false);
+  const [showReplyForm, setShowReplyForm] = useState(false);
+  const [replyContent, setReplyContent] = useState('');
 
   const handleLike = async () => {
-    if (!user) return;
+    if (!user) {
+      const event = new CustomEvent('showProfileModal');
+      window.dispatchEvent(event);
+      return;
+    }
 
     try {
       const response = await fetch(`/api/threads/${thread.id}/like`, {
@@ -39,6 +48,70 @@ export default function Thread({ thread }: { thread: Thread }) {
       setIsLiked(!isLiked);
     } catch (error) {
       console.error('Error liking thread:', error);
+    }
+  };
+
+  const handleRepost = async () => {
+    if (!user) {
+      const event = new CustomEvent('showProfileModal');
+      window.dispatchEvent(event);
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/threads/${thread.id}/repost`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to repost thread');
+      }
+
+      setReposts(prev => isReposted ? prev - 1 : prev + 1);
+      setIsReposted(!isReposted);
+    } catch (error) {
+      console.error('Error reposting thread:', error);
+    }
+  };
+
+  const handleReply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) {
+      const event = new CustomEvent('showProfileModal');
+      window.dispatchEvent(event);
+      return;
+    }
+
+    if (!replyContent.trim()) return;
+
+    try {
+      const response = await fetch(`/api/threads/${thread.id}/reply`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: replyContent,
+          userId: user.id,
+          userName: user.name,
+          userAvatar: user.avatar,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to reply to thread');
+      }
+
+      setReplyContent('');
+      setShowReplyForm(false);
+      // Refresh the page to show the new reply
+      window.location.reload();
+    } catch (error) {
+      console.error('Error replying to thread:', error);
     }
   };
 
@@ -70,13 +143,21 @@ export default function Thread({ thread }: { thread: Thread }) {
           </div>
           <p className="mt-1 text-gray-900">{thread.content}</p>
           <div className="mt-2 flex items-center space-x-6">
-            <button className="flex items-center space-x-1 text-gray-500 hover:text-blue-500 group">
+            <button 
+              onClick={() => setShowReplyForm(!showReplyForm)}
+              className="flex items-center space-x-1 text-gray-500 hover:text-blue-500 group"
+            >
               <span className="text-xl group-hover:scale-110 transition-transform">💬</span>
               <span className="text-sm">{thread.replies.length}</span>
             </button>
-            <button className="flex items-center space-x-1 text-gray-500 hover:text-green-500 group">
+            <button 
+              onClick={handleRepost}
+              className={`flex items-center space-x-1 group ${
+                isReposted ? 'text-green-500' : 'text-gray-500 hover:text-green-500'
+              }`}
+            >
               <span className="text-xl group-hover:scale-110 transition-transform">🔄</span>
-              <span className="text-sm">0</span>
+              <span className="text-sm">{reposts}</span>
             </button>
             <button
               onClick={handleLike}
@@ -93,6 +174,27 @@ export default function Thread({ thread }: { thread: Thread }) {
               <span className="text-xl group-hover:scale-110 transition-transform">📤</span>
             </button>
           </div>
+
+          {showReplyForm && (
+            <form onSubmit={handleReply} className="mt-4">
+              <textarea
+                value={replyContent}
+                onChange={(e) => setReplyContent(e.target.value)}
+                placeholder="Write your reply..."
+                className="w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500"
+                rows={2}
+              />
+              <div className="mt-2 flex justify-end">
+                <button
+                  type="submit"
+                  disabled={!replyContent.trim()}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-full font-medium hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                >
+                  Reply
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     </div>
