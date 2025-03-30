@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
+import { SessionProvider } from 'next-auth/react';
 import './globals.css';
 import Layout from './components/Layout';
 import Providers from './components/Providers';
@@ -27,9 +28,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className={`${inter.className} h-full antialiased`}>
-        <Providers>
-          <Layout>{children}</Layout>
-        </Providers>
+        <SessionProvider>
+          <Providers>
+            <Layout>{children}</Layout>
+          </Providers>
+        </SessionProvider>
       </body>
     </html>
   );

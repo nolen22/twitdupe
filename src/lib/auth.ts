@@ -9,7 +9,9 @@ export const authOptions: NextAuthOptions = {
         name: { label: "Name", type: "text" }
       },
       async authorize(credentials) {
-        if (!credentials?.name) return null;
+        if (!credentials?.name) {
+          throw new Error('Please enter your name');
+        }
 
         // Create a simple user object
         return {
@@ -46,4 +48,5 @@ export const authOptions: NextAuthOptions = {
     error: '/',
   },
   debug: process.env.NODE_ENV === 'development',
+  secret: process.env.NEXTAUTH_SECRET || 'your-secret-key',
 }; 
