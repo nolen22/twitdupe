@@ -18,9 +18,19 @@ interface ThreadData {
 
 export default function Home() {
   const [threads, setThreads] = useState<ThreadData[]>([]);
-  const [username, setUsername] = useState(generateRandomUsername());
+  const [username, setUsername] = useState<string>('');
 
   useEffect(() => {
+    // Check if there's a stored username
+    const storedUsername = localStorage.getItem('username');
+    if (storedUsername) {
+      setUsername(storedUsername);
+    } else {
+      // Generate a new username only if one doesn't exist
+      const newUsername = generateRandomUsername();
+      setUsername(newUsername);
+      localStorage.setItem('username', newUsername);
+    }
     fetchThreads();
   }, []);
 

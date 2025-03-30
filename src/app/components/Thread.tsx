@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useUser } from '../context/UserContext';
 import ThreadForm from './ThreadForm';
 import { generateRandomUsername } from '@/lib/utils';
@@ -31,7 +31,20 @@ export default function Thread({
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replies, setReplies] = useState<ThreadProps[]>(initialReplies);
   const { user } = useUser();
-  const [replyUsername] = useState(generateRandomUsername());
+  const [replyUsername, setReplyUsername] = useState<string>('');
+
+  useEffect(() => {
+    // Use the same username from localStorage for replies
+    const storedUsername = localStorage.getItem('username');
+    if (storedUsername) {
+      setReplyUsername(storedUsername);
+    } else {
+      // Generate a new username only if one doesn't exist
+      const newUsername = generateRandomUsername();
+      setReplyUsername(newUsername);
+      localStorage.setItem('username', newUsername);
+    }
+  }, []);
 
   const handleReply = async (newThread: ThreadProps) => {
     setReplies(prevReplies => [newThread, ...prevReplies]);
