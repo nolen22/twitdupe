@@ -3,9 +3,6 @@ import { getServerSession } from 'next-auth';
 import prisma from '@/lib/prisma';
 import { authOptions } from '@/lib/auth';
 
-// In-memory storage for replies (replace with database later)
-const replies = new Map<string, any[]>();
-
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
@@ -24,25 +21,6 @@ export async function POST(
       return new NextResponse('Content is required', { status: 400 });
     }
 
-    // Initialize replies array for this thread if it doesn't exist
-    if (!replies.has(threadId)) {
-      replies.set(threadId, []);
-    }
-
-    const threadReplies = replies.get(threadId)!;
-    const newReply = {
-      id: Date.now().toString(),
-      content,
-      authorId: userId,
-      authorName: session.user.name,
-      authorImage: session.user.image,
-      createdAt: new Date().toISOString(),
-      likes: 0,
-      replies: [],
-    };
-
-    threadReplies.push(newReply);
-
     // Create the reply and update the reply count in a transaction
     const [reply] = await prisma.$transaction([
       prisma.reply.create({
@@ -50,6 +28,14 @@ export async function POST(
           content,
           userId,
           threadId,
+        },
+        include: {
+          user: {
+            select: {
+              name: true,
+              image: true,
+            },
+          },
         },
       }),
       prisma.thread.update({
