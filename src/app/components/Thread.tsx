@@ -4,7 +4,7 @@ interface Thread {
   authorId: string;
   authorName: string;
   authorImage: string;
-  createdAt: Date;
+  createdAt: string;
   likes: number;
   replies: Thread[];
 }

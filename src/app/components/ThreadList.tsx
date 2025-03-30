@@ -9,7 +9,7 @@ interface Thread {
   authorId: string;
   authorName: string;
   authorImage: string;
-  createdAt: Date;
+  createdAt: string;
   likes: number;
   replies: Thread[];
 }
@@ -17,37 +17,20 @@ interface Thread {
 export default function ThreadList() {
   const [threads, setThreads] = useState<Thread[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    // TODO: Implement thread fetching
     const fetchThreads = async () => {
       try {
-        // Simulated data for now
-        const mockThreads: Thread[] = [
-          {
-            id: '1',
-            content: 'This is a sample thread!',
-            authorId: '1',
-            authorName: 'John Doe',
-            authorImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=John',
-            createdAt: new Date(),
-            likes: 0,
-            replies: [],
-          },
-          {
-            id: '2',
-            content: 'Another sample thread!',
-            authorId: '2',
-            authorName: 'Jane Smith',
-            authorImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Jane',
-            createdAt: new Date(),
-            likes: 0,
-            replies: [],
-          },
-        ];
-        setThreads(mockThreads);
+        const response = await fetch('/api/threads');
+        if (!response.ok) {
+          throw new Error('Failed to fetch threads');
+        }
+        const data = await response.json();
+        setThreads(data);
       } catch (error) {
         console.error('Error fetching threads:', error);
+        setError('Failed to load threads. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -57,7 +40,15 @@ export default function ThreadList() {
   }, []);
 
   if (loading) {
-    return <div className="p-4">Loading threads...</div>;
+    return <div className="p-4 text-center text-gray-500">Loading threads...</div>;
+  }
+
+  if (error) {
+    return <div className="p-4 text-center text-red-500">{error}</div>;
+  }
+
+  if (threads.length === 0) {
+    return <div className="p-4 text-center text-gray-500">No threads yet. Be the first to post!</div>;
   }
 
   return (
