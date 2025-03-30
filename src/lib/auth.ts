@@ -1,33 +1,49 @@
 import { NextAuthOptions } from 'next-auth';
-import GithubProvider from 'next-auth/providers/github';
-import GoogleProvider from 'next-auth/providers/google';
+import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import prisma from './prisma';
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
-    GithubProvider({
-      clientId: process.env.GITHUB_ID!,
-      clientSecret: process.env.GITHUB_SECRET!,
-    }),
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
+    CredentialsProvider({
+      name: 'Credentials',
+      credentials: {
+        name: { label: "Name", type: "text" }
+      },
+      async authorize(credentials) {
+        if (!credentials?.name) return null;
+
+        // Create or find user
+        const user = await prisma.user.upsert({
+          where: { name: credentials.name },
+          update: {},
+          create: {
+            name: credentials.name,
+            image: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(credentials.name)}`,
+          },
+        });
+
+        return {
+          id: user.id,
+          name: user.name,
+          image: user.image,
+        };
+      }
+    })
   ],
   session: {
     strategy: 'jwt',
   },
   callbacks: {
-    session: async ({ session, token }) => {
-      if (session?.user) {
+    async session({ session, token }) {
+      if (session.user) {
         session.user.id = token.sub!;
       }
       return session;
     },
   },
   pages: {
-    signIn: '/auth/signin',
+    signIn: '/',
   },
 }; 
