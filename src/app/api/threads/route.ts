@@ -48,7 +48,7 @@ export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.name) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Please sign in to post' }, { status: 401 });
     }
 
     const { content } = await request.json();
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
 
     // First, ensure the user exists
     const user = await prisma.user.upsert({
-      where: { email: session.user.email || session.user.name },
+      where: { name: session.user.name },
       update: {},
       create: {
         name: session.user.name,
@@ -76,6 +76,8 @@ export async function POST(request: Request) {
       data: {
         content,
         authorId: user.id,
+        authorName: user.name,
+        authorImage: user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`,
       },
     }) as any;
 

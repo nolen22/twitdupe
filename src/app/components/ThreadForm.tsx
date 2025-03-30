@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useUser } from '../context/UserContext';
+import { useRouter } from 'next/navigation';
 
 interface ThreadFormProps {
   onThreadCreated?: (thread: any) => void;
@@ -10,13 +11,22 @@ interface ThreadFormProps {
 export default function ThreadForm({ onThreadCreated }: ThreadFormProps) {
   const [content, setContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const { user } = useUser();
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!content.trim() || isLoading) return;
 
+    if (!user?.name) {
+      setError('Please sign in to post');
+      return;
+    }
+
     setIsLoading(true);
+    setError('');
+    
     try {
       const response = await fetch('/api/threads', {
         method: 'POST',
@@ -27,7 +37,8 @@ export default function ThreadForm({ onThreadCreated }: ThreadFormProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create thread');
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to create thread');
       }
 
       const newThread = await response.json();
@@ -35,6 +46,7 @@ export default function ThreadForm({ onThreadCreated }: ThreadFormProps) {
       onThreadCreated?.(newThread);
     } catch (error) {
       console.error('Error creating thread:', error);
+      setError(error instanceof Error ? error.message : 'Failed to create thread');
     } finally {
       setIsLoading(false);
     }
@@ -53,17 +65,20 @@ export default function ThreadForm({ onThreadCreated }: ThreadFormProps) {
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
-              placeholder="What's happening?"
+              placeholder={user?.name ? "What's happening?" : "Please sign in to post"}
               className="w-full h-24 p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-900 placeholder-gray-500 resize-none"
-              disabled={isLoading}
+              disabled={!user?.name}
             />
+            {error && (
+              <p className="text-red-500 text-sm mt-2">{error}</p>
+            )}
             <div className="flex justify-between items-center mt-2">
               <span className="text-sm text-gray-500">
                 {user?.name || 'Anonymous'}
               </span>
               <button
                 type="submit"
-                disabled={!content.trim() || isLoading}
+                disabled={!content.trim() || isLoading || !user?.name}
                 className="px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? 'Posting...' : 'Post'}
