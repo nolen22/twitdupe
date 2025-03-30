@@ -60,23 +60,30 @@ export async function POST(request: Request) {
       );
     }
 
+    // First, ensure the user exists
+    const user = await prisma.user.upsert({
+      where: { email: session.user.email || session.user.name },
+      update: {},
+      create: {
+        name: session.user.name,
+        email: session.user.email || session.user.name,
+        image: session.user.image || undefined,
+      },
+    });
+
+    // Then create the thread
     const thread = await prisma.thread.create({
       data: {
         content,
-        authorId: session.user.name,
-        authorName: session.user.name,
-        authorImage: session.user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.name}`,
-        likesCount: 0,
-        repostCount: 0,
-        replyCount: 0,
+        authorId: user.id,
       },
     }) as any;
 
     return NextResponse.json({
       id: thread.id,
       content: thread.content,
-      authorName: thread.authorName,
-      authorImage: thread.authorImage,
+      authorName: user.name,
+      authorImage: user.image || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.name}`,
       createdAt: thread.createdAt,
       likes: thread.likesCount,
       repostCount: thread.repostCount,
