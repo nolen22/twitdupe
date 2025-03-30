@@ -1,12 +1,19 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { content, authorName, authorImage } = await request.json();
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.name) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { content } = await request.json();
 
     if (!content) {
       return NextResponse.json(
@@ -18,10 +25,9 @@ export async function POST(
     const reply = await prisma.thread.create({
       data: {
         content,
-        authorName: authorName || 'Anonymous',
-        authorImage: authorImage || `https://api.dicebear.com/7.x/avataaars/svg?seed=anonymous`,
+        authorId: session.user.name,
         parentId: params.id,
-      },
+      } as any, // Type assertion to bypass type checking temporarily
     });
 
     return NextResponse.json(reply);

@@ -8,10 +8,19 @@ async function getThreads() {
       createdAt: 'desc',
     },
     include: {
-      childThreads: true,
+      replies: true,
     },
-  });
-  return threads;
+  }) as any;
+  return threads.map((thread: any) => ({
+    ...thread,
+    likes: thread.likesCount,
+    repostCount: thread.repostCount,
+    replies: thread.replies.map((reply: any) => ({
+      ...reply,
+      likes: reply.likesCount,
+      repostCount: reply.repostCount,
+    }))
+  }));
 }
 
 export default async function Home() {
@@ -22,11 +31,10 @@ export default async function Home() {
       <div className="w-full max-w-2xl space-y-4">
         <ThreadForm />
         <div className="space-y-4">
-          {threads.map((thread) => (
+          {threads.map((thread: any) => (
             <Thread
               key={thread.id}
               {...thread}
-              replies={thread.childThreads}
             />
           ))}
         </div>
