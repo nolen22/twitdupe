@@ -11,6 +11,10 @@ const nextConfig = {
   },
   output: 'standalone',
   poweredByHeader: false,
+  distDir: '.next',
+  generateEtags: true,
+  reactStrictMode: true,
+  swcMinify: true,
 };
 
 module.exports = nextConfig; 
