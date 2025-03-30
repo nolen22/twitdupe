@@ -39,7 +39,7 @@ export default function Home() {
       <div className="w-full max-w-2xl space-y-4">
         <div className="bg-white rounded-lg shadow p-4">
           <div className="mb-4">
-            <p className="text-sm text-gray-600">Posting as: <span className="font-medium text-gray-900">{username}</span></p>
+            <p className="text-sm text-gray-600">Posting as: <span className="font-medium text-blue-600">{username}</span></p>
           </div>
           <ThreadForm onThreadCreated={handleNewThread} username={username} />
         </div>

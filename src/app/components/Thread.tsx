@@ -71,7 +71,7 @@ export default function Thread({
           {showReplyForm && (
             <div className="mt-4">
               <div className="mb-2">
-                <p className="text-sm text-gray-600">Replying as: <span className="font-medium text-gray-900">{replyUsername}</span></p>
+                <p className="text-sm text-gray-600">Replying as: <span className="font-medium text-blue-600">{replyUsername}</span></p>
               </div>
               <ThreadForm onThreadCreated={handleReply} username={replyUsername} />
             </div>
