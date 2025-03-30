@@ -23,10 +23,10 @@ const UserContext = createContext<UserContextType>({
 });
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   
   const user = session?.user ? {
-    id: session.user.id,
+    id: session.user.id || '',
     name: session.user.name,
     email: session.user.email,
     image: session.user.image,
@@ -49,6 +49,4 @@ export function UserProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useUser() {
-  return useContext(UserContext);
-} 
+export const useUser = () => useContext(UserContext); 
