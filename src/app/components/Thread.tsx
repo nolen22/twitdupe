@@ -13,6 +13,8 @@ interface ThreadProps {
   likes: number;
   repostCount: number;
   replies?: ThreadProps[];
+  authorId?: string;
+  updatedAt?: Date;
 }
 
 export default function Thread({
