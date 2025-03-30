@@ -1,10 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { SessionProvider } from 'next-auth/react';
-import { UserProvider } from './context/UserContext';
-import UserProfileModal from './components/UserProfileModal';
 import Layout from './components/Layout';
+import Providers from './components/Providers';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -29,12 +27,9 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className={`${inter.className} h-full antialiased`}>
-        <SessionProvider>
-          <UserProvider>
-            <Layout>{children}</Layout>
-            <UserProfileModal />
-          </UserProvider>
-        </SessionProvider>
+        <Providers>
+          <Layout>{children}</Layout>
+        </Providers>
       </body>
     </html>
   );
