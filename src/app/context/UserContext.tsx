@@ -13,11 +13,13 @@ interface User {
 interface UserContextType {
   user: User | null;
   login: (user: { id: string; name: string; avatar: string }) => void;
+  logout: () => void;
 }
 
 const UserContext = createContext<UserContextType>({ 
   user: null,
   login: () => {},
+  logout: () => {},
 });
 
 export function UserProvider({ children }: { children: ReactNode }) {
@@ -32,12 +34,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const login = (userData: { id: string; name: string; avatar: string }) => {
     // Since we're using NextAuth now, this function is just a placeholder
-    // You might want to trigger the NextAuth signin instead
     console.warn('Using login() is deprecated. Please use NextAuth signin instead.');
   };
 
+  const logout = () => {
+    // Since we're using NextAuth now, this function is just a placeholder
+    console.warn('Using logout() is deprecated. Please use NextAuth signout instead.');
+  };
+
   return (
-    <UserContext.Provider value={{ user, login }}>
+    <UserContext.Provider value={{ user, login, logout }}>
       {children}
     </UserContext.Provider>
   );
