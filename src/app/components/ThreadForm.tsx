@@ -10,7 +10,7 @@ export default function ThreadForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!content.trim()) return;
+    if (!content.trim() || !user) return;
 
     setIsLoading(true);
     try {
@@ -19,7 +19,11 @@ export default function ThreadForm() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content }),
+        body: JSON.stringify({
+          content,
+          authorName: user.name,
+          authorImage: user.image,
+        }),
       });
 
       if (!response.ok) throw new Error('Failed to create thread');
@@ -48,11 +52,16 @@ export default function ThreadForm() {
     <form onSubmit={handleSubmit} className="bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-xl p-4 mb-4">
       <div className="flex gap-3">
         <img
-          src={user.avatar}
-          alt={user.name}
+          src={user.image || 'https://via.placeholder.com/40'}
+          alt={user.name || 'User'}
           className="w-10 h-10 rounded-full ring-2 ring-gray-200 dark:ring-gray-800"
         />
         <div className="flex-1">
+          <div className="mb-2">
+            <span className="font-medium text-gray-900 dark:text-white">
+              {user.name || 'Anonymous'}
+            </span>
+          </div>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}

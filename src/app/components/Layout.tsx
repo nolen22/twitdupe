@@ -22,7 +22,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         />
       </svg>
     )},
-    { name: 'Search', href: '/search', icon: (
+    { name: 'Search Users', href: '/search', icon: (
       <svg viewBox="0 0 24 24" className="w-6 h-6">
         <path 
           fill="currentColor" 

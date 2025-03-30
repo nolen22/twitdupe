@@ -1,4 +1,7 @@
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import prisma from '@/lib/prisma';
+import { authOptions } from '@/lib/auth';
 
 // In-memory storage for threads (replace with database later)
 let threads = [
@@ -25,38 +28,58 @@ let threads = [
 ];
 
 export async function GET() {
-  return NextResponse.json(threads);
+  try {
+    const threads = await prisma.thread.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+      include: {
+        author: {
+          select: {
+            name: true,
+            image: true,
+          },
+        },
+      },
+    });
+
+    return NextResponse.json(threads);
+  } catch (error) {
+    console.error('Error in GET /api/threads:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { content } = body;
-
-    if (!content) {
-      return NextResponse.json(
-        { error: 'Content is required' },
-        { status: 400 }
-      );
+    const session = await getServerSession(authOptions);
+    if (!session?.user) {
+      return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    const newThread = {
-      id: Date.now().toString(),
-      content,
-      authorId: '1', // Replace with actual user ID from auth
-      authorName: 'Current User', // Replace with actual user name
-      authorImage: 'https://api.dicebear.com/7.x/avataaars/svg?seed=CurrentUser',
-      createdAt: new Date().toISOString(),
-      likes: 0,
-      replies: [],
-    };
+    const { content } = await request.json();
+    if (!content?.trim()) {
+      return new NextResponse('Content is required', { status: 400 });
+    }
 
-    threads = [newThread, ...threads];
-    return NextResponse.json(newThread, { status: 201 });
+    const thread = await prisma.thread.create({
+      data: {
+        content,
+        authorId: session.user.id,
+      },
+      include: {
+        author: {
+          select: {
+            name: true,
+            image: true,
+          },
+        },
+      },
+    });
+
+    return NextResponse.json(thread);
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to create thread' },
-      { status: 500 }
-    );
+    console.error('Error in POST /api/threads:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 } 

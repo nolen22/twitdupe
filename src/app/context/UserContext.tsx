@@ -1,47 +1,33 @@
 'use client';
 
-import { createContext, useContext, useState, useMemo } from 'react';
+import { createContext, useContext, ReactNode } from 'react';
+import { useSession } from 'next-auth/react';
 
 interface User {
   id: string;
-  name: string;
-  avatar: string;
+  name: string | null | undefined;
+  email: string | null | undefined;
+  image: string | null | undefined;
 }
 
 interface UserContextType {
   user: User | null;
-  isAuthenticated: boolean;
-  login: (user: User) => void;
-  logout: () => void;
 }
 
-const UserContext = createContext<UserContextType>({
-  user: null,
-  isAuthenticated: false,
-  login: () => {},
-  logout: () => {},
-});
+const UserContext = createContext<UserContextType>({ user: null });
 
-export function UserProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-
-  const login = (user: User) => {
-    setUser(user);
-  };
-
-  const logout = () => {
-    setUser(null);
-  };
-
-  const value = useMemo(() => ({
-    user,
-    isAuthenticated: !!user,
-    login,
-    logout,
-  }), [user]);
+export function UserProvider({ children }: { children: ReactNode }) {
+  const { data: session } = useSession();
+  
+  const user = session?.user ? {
+    id: session.user.id,
+    name: session.user.name,
+    email: session.user.email,
+    image: session.user.image,
+  } : null;
 
   return (
-    <UserContext.Provider value={value}>
+    <UserContext.Provider value={{ user }}>
       {children}
     </UserContext.Provider>
   );
